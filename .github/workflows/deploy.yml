@@ -1,0 +1,74 @@
+name: Deploy Logic Apps (Consumption) via Bicep
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - dev
+          - prod
+      nameToken:
+        description: 'Short token used in names (e.g. rn01)'
+        required: true
+        default: 'rn01'
+      location:
+        description: 'Azure region (e.g. westeurope)'
+        required: true
+        default: 'westeurope'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-dev:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy DEV
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          region: westeurope
+          resourceGroupName: rg-${{ github.repository_owner }}-${{ github.event.repository.name }}-dev
+          template: infra/main.bicep
+          parameters: infra/main.dev.parameters.json nameToken=${{ vars.NAME_TOKEN || 'rn01' }} environment=dev location=westeurope
+
+  deploy-prod:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy (selected environment)
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          region: ${{ inputs.location }}
+          resourceGroupName: rg-${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ inputs.environment }}
+          template: infra/main.bicep
+          parameters: infra/main.${{ inputs.environment }}.parameters.json nameToken=${{ inputs.nameToken }} environment=${{ inputs.environment }} location=${{ inputs.location }}
