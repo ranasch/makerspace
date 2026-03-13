@@ -41,7 +41,7 @@ Also ensure the Entra app (or MI) has a federated credential trust for this repo
 ### Option B: local CLI (trainer fallback)
 ```bash
 az group create -n rg-<nameToken>-dev -l <location>
-az deployment group create   -g rg-<nameToken>-dev   -f infra/main.bicep   -p infra/main.dev.parameters.json
+az deployment group create   -g rg-<nameToken>-dev   -f infra/main.bicep   -p infra/main.dev.bicepparam
 ```
 
 ---

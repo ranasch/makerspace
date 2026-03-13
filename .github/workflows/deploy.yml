@@ -48,7 +48,7 @@ jobs:
           region: westeurope
           resourceGroupName: rg-${{ github.repository_owner }}-${{ github.event.repository.name }}-dev
           template: infra/main.bicep
-          parameters: infra/main.dev.parameters.json nameToken=${{ vars.NAME_TOKEN || 'rn01' }} environment=dev location=westeurope
+          parameters: infra/main.dev.bicepparam nameToken=${{ vars.NAME_TOKEN || 'rn01' }} environment=dev location=westeurope
 
   deploy-prod:
     if: github.event_name == 'workflow_dispatch'
@@ -71,4 +71,4 @@ jobs:
           region: ${{ inputs.location }}
           resourceGroupName: rg-${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ inputs.environment }}
           template: infra/main.bicep
-          parameters: infra/main.${{ inputs.environment }}.parameters.json nameToken=${{ inputs.nameToken }} environment=${{ inputs.environment }} location=${{ inputs.location }}
+          parameters: infra/main.${{ inputs.environment }}.bicepparam nameToken=${{ inputs.nameToken }} environment=${{ inputs.environment }} location=${{ inputs.location }}
