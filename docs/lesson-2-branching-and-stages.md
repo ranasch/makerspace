@@ -68,6 +68,9 @@ on:
     branches:
       - main
       - develop
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -75,6 +78,29 @@ permissions:
   contents: read
 
 jobs:
+  validate-prod:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: What-if (prod)
+        uses: azure/arm-deploy@v2
+        with:
+          scope: subscription
+          region: westeurope
+          template: infra/main.bicep
+          parameters: infra/main.prod.bicepparam
+          additionalArguments: --what-if
+
   deploy-dev:
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
@@ -121,7 +147,8 @@ jobs:
 ```
 
 Key changes from Lesson 1:
-- **Triggers** on both `main` and `develop`.
+- **Triggers** on both `main` and `develop`, plus `pull_request` to `main`.
+- **`validate-prod`** runs a **what-if** check on PRs to `main` — shows what would change in prod *without* actually deploying. This protects the main branch.
 - **`deploy-dev`** runs only on pushes to `develop`.
 - **`deploy-prod`** runs only on pushes to `main` using environment `prod`.
 
@@ -160,6 +187,7 @@ Watch the `deploy-dev` job in **Actions**. The `deploy-prod` job should be skipp
 
 ### Pipeline behaviour
 - Push to `develop` → only `deploy-dev` runs ✅
+- PR to `main` → `validate-prod` runs what-if check ✅
 - Push/merge to `main` → only `deploy-prod` runs ✅
 
 ---
@@ -171,6 +199,7 @@ Watch the `deploy-dev` job in **Actions**. The `deploy-prod` job should be skipp
 | ✅ | `main.prod.bicepparam` created |
 | ✅ | `prod` GitHub environment with OIDC secrets |
 | ✅ | `deploy.yml` routes branches to stages |
+| ✅ | What-if validation protects PRs to `main` |
 | ✅ | Dev deploys on `develop`, prod deploys on `main` |
 
 **Next:** [Lesson 3 — TODO Workflow](lesson-3-todo-workflow.md)
