@@ -1,74 +1,68 @@
-# Logic Apps — Problem → Production with DevOps (Consumption)
+# Logic Apps — From Problem to Production with DevOps
 
-This repo is a **hands-on** workshop starter for deploying an **Azure Logic App (Consumption)** via **Bicep** and **GitHub Actions (OIDC)**, then validating logs in **Log Analytics**.
+A hands-on workshop that takes you from a bare **Azure Logic App (Consumption)** deployment all the way to a production-grade TODO API with multi-stage pipelines, storage persistence, and monitoring.
 
-## What you’ll deploy
-- Log Analytics workspace
-- Consumption Logic App with a **Request** trigger and an **HTTP** action
-- Diagnostic Settings to send logs/metrics to the workspace
+---
 
-> References:
-> - Consumption Logic App via Bicep quickstart: https://learn.microsoft.com/en-us/azure/logic-apps/quickstart-create-deploy-bicep
-> - Deploy Bicep with GitHub Actions (OIDC): https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-github-actions
-> - GitHub Actions OIDC to Azure: https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure-openid-connect
+## Lesson Roadmap
+
+| # | Lesson | What you'll do |
+|---|--------|----------------|
+| 1 | [Deployment](docs/lesson-1-deployment.md) | Deploy a simple echo Logic App to Azure via GitHub Actions (OIDC). Single branch, single stage. |
+| 2 | [Branching & Stages](docs/lesson-2-branching-and-stages.md) | Introduce `develop` as default branch. Add a `prod` stage so `develop` → dev, `main` → prod. |
+| 3 | [TODO Workflow](docs/lesson-3-todo-workflow.md) | Replace the echo workflow with a full CRUD TODO API backed by Azure Table Storage and managed identity. |
+| 4 | [Monitoring](docs/lesson-4-monitoring.md) | Add custom tracking IDs, tracked properties, Log Analytics workspace, diagnostic settings, saved queries, and an Azure Workbook. |
 
 ---
 
 ## Prerequisites
-### VS Code extensions
-Install:
-- **Azure Logic Apps (Consumption)** — `ms-azuretools.vscode-logicapps`
-- **Bicep** — `ms-azuretools.vscode-bicep`
-- **GitHub Actions** — `github.vscode-github-actions`
-Optional:
-- **Azure CLI Tools** — `ms-vscode.azurecli`
 
-### GitHub Actions OIDC secrets
-Configure these secrets (repo or environment secrets):
-- `AZURE_CLIENT_ID`
-- `AZURE_TENANT_ID`
-- `AZURE_SUBSCRIPTION_ID`
+### Tools
+| Tool | Install |
+|------|---------|
+| VS Code | https://code.visualstudio.com/ |
+| Bicep extension | `ms-azuretools.vscode-bicep` |
+| GitHub Actions extension | `github.vscode-github-actions` |
+| Azure CLI | https://learn.microsoft.com/cli/azure/install-azure-cli |
 
-Also ensure the Entra app (or MI) has a federated credential trust for this repo/environment and Contributor permission.
+### Azure
+- An Azure subscription with **Contributor** access.
+- An **Entra ID app registration** (or user-assigned managed identity) with:
+  - A **federated credential** trusting your GitHub repo (environment: `dev`).
+  - **Contributor** role on the subscription.
+
+### GitHub
+- A GitHub repository (fork or copy of this starter).
+- Repository **variables** configured on the `dev` environment:
+  - `AZURE_CLIENT_ID`
+  - `AZURE_TENANT_ID`
+  - `AZURE_SUBSCRIPTION_ID`
+
+> **Note:** This workshop uses environment **variables** (`vars.*`) instead of secrets so values are visible in the UI for easier troubleshooting. In real-world scenarios, use **environment secrets** (`secrets.*`) to keep credentials hidden.
+
+> **Tip:** Each participant should choose a unique `nameToken` (e.g. their initials + a digit: `ab01`) and update it in `infra/main.dev.bicepparam` before their first deployment.
 
 ---
 
-## How to run the deployment
-### Option A: GitHub Actions (recommended)
-1. Push to `main` to deploy **dev**.
-2. Run **workflow_dispatch** to deploy **prod** (with environment approval gate if configured).
+## Quick Reference
 
-### Option B: local CLI (trainer fallback)
+### Deploy via CLI (trainer fallback)
 ```bash
-az group create -n rg-<nameToken>-dev -l <location>
-az deployment group create   -g rg-<nameToken>-dev   -f infra/main.bicep   -p infra/main.dev.bicepparam
+az deployment sub create \
+  -l westeurope \
+  -f infra/main.bicep \
+  -p infra/main.dev.bicepparam
 ```
+
+### Current state (Lesson 1 start)
+- **Workflow:** Echo — accepts a POST with `subject` + `description`, returns them back.
+- **Pipeline:** Single branch (`main`) → `dev` environment.
+- **Resources:** Resource group + Logic App only.
 
 ---
 
-## Trigger the Logic App with curl
-After deployment, open the Logic App in Azure Portal and get the **Callback URL** for the `manual` trigger.
-
-### Example: call the workflow
-```bash
-curl -X POST   -H "Content-Type: application/json"   -d '{"message":"hello from workshop"}'   "<PASTE_TRIGGER_CALLBACK_URL_HERE>"
-```
-
-### Expected response shape
-```json
-{
-  "message": "hello from workshop",
-  "correlationId": "<guid>",
-  "upstreamStatusCode": 200,
-  "utcNow": "2026-02-27T...Z"
-}
-```
-
----
-
-## Monitoring
-- Open the **Log Analytics workspace** created by the deployment.
-- Validate diagnostic settings exist on the Logic App.
-
-> Note: Log table names can vary depending on how diagnostics are configured in your tenant.
+## References
+- [Consumption Logic App via Bicep quickstart](https://learn.microsoft.com/azure/logic-apps/quickstart-create-deploy-bicep)
+- [Deploy Bicep with GitHub Actions (OIDC)](https://learn.microsoft.com/azure/azure-resource-manager/bicep/deploy-github-actions)
+- [GitHub Actions OIDC to Azure](https://learn.microsoft.com/azure/developer/github/connect-from-azure-openid-connect)
 
