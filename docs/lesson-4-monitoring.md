@@ -139,7 +139,7 @@ resource savedSearchActions 'Microsoft.OperationalInsights/workspaces/savedSearc
   properties: {
     category: 'Logic Apps'
     displayName: 'TODO API – Action Details'
-    query: 'AzureDiagnostics | where ResourceProvider == "MICROSOFT.LOGIC" | where OperationName has "workflowAction" | extend Action = resource_actionName_s | extend TrackedAction = column_ifexists("trackedProperties_action_s", "") | extend TrackedSubject = column_ifexists("trackedProperties_subject_s", "") | extend DurationMs = datetime_diff("millisecond", endTime_t, startTime_t) | project TimeGenerated, RunId = resource_runId_s, Action, Status = status_s, TrackedAction, TrackedSubject, DurationMs | order by TimeGenerated desc'
+    query: 'AzureDiagnostics | where ResourceProvider == "MICROSOFT.LOGIC" | where OperationName contains "workflowAction" | extend Action = resource_actionName_s | extend TrackedAction = column_ifexists("trackedProperties_action_s", "") | extend TrackedSubject = column_ifexists("trackedProperties_subject_s", "") | extend DurationMs = datetime_diff("millisecond", endTime_t, startTime_t) | project TimeGenerated, RunId = resource_runId_s, Action, Status = status_s, TrackedAction, TrackedSubject, DurationMs | order by TimeGenerated desc'
     version: 2
   }
 }
@@ -255,7 +255,7 @@ var workbookContent = '''
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "AzureDiagnostics\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_runId_s == \"{SelectedRunId}\"\n| where OperationName has \"workflowAction\"\n| extend Action = resource_actionName_s\n| extend TrackedAction = column_ifexists('trackedProperties_action_s', '')\n| extend TrackedSubject = column_ifexists('trackedProperties_subject_s', '')\n| extend TrackedDescription = column_ifexists('trackedProperties_description_s', '')\n| extend TrackedTodoId = column_ifexists('trackedProperties_todoId_s', '')\n| extend TrackedStatusCode = column_ifexists('trackedProperties_statusCode_s', '')\n| extend DurationMs = datetime_diff(\"millisecond\", endTime_t, startTime_t)\n| project TimeGenerated, Action, Status = status_s, TrackedAction, TrackedSubject, TrackedDescription, TrackedTodoId, TrackedStatusCode, DurationMs\n| order by TimeGenerated asc",
+        "query": "AzureDiagnostics\n| where ResourceProvider == \"MICROSOFT.LOGIC\"\n| where resource_runId_s == \"{SelectedRunId}\"\n| where OperationName contains \"workflowAction\"\n| extend Action = resource_actionName_s\n| extend TrackedAction = column_ifexists('trackedProperties_action_s', '')\n| extend TrackedSubject = column_ifexists('trackedProperties_subject_s', '')\n| extend TrackedDescription = column_ifexists('trackedProperties_description_s', '')\n| extend TrackedTodoId = column_ifexists('trackedProperties_todoId_s', '')\n| extend TrackedStatusCode = column_ifexists('trackedProperties_statusCode_s', '')\n| extend DurationMs = datetime_diff(\"millisecond\", endTime_t, startTime_t)\n| project TimeGenerated, Action, Status = status_s, TrackedAction, TrackedSubject, TrackedDescription, TrackedTodoId, TrackedStatusCode, DurationMs\n| order by TimeGenerated asc",
         "size": 0,
         "timeContextFromParameter": "TimeRange",
         "queryType": 0,
