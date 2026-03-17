@@ -61,10 +61,9 @@ resource table 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-05-0
 
 ## 2 — Replace the workflow definition
 
-Replace the entire `workflowDefinition` variable with the TODO API workflow. Since Consumption Logic Apps can't read the HTTP method from `triggerOutputs()`, we route on a body field `action` with values: `list`, `create`, `update`, `delete`.
+Replace the contents of `infra/workflow-definition.json` with the TODO API workflow. Since Consumption Logic Apps can't read the HTTP method from `triggerOutputs()`, we route on a body field `action` with values: `list`, `create`, `update`, `delete`.
 
-```bicep
-var workflowDefinition = json('''
+```json
 {
   "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
   "contentVersion": "1.0.0.0",
@@ -252,8 +251,9 @@ var workflowDefinition = json('''
   },
   "outputs": {}
 }
-''')
 ```
+
+> **Note:** The workflow definition lives in a separate `workflow-definition.json` file and is loaded via `loadJsonContent()` in `resources.bicep`. This keeps the Bicep file clean and the workflow definition easy to edit.
 
 ---
 

@@ -14,7 +14,7 @@
 
 ## 1 — Add a custom tracking ID to the trigger
 
-In `infra/resources.bicep`, update the trigger inside the `workflowDefinition` JSON. Add a `trackingId` property to the schema and a `correlation` block:
+Open `infra/workflow-definition.json` and update the trigger. Add a `trackingId` property to the schema and a `correlation` block:
 
 ```jsonc
 "triggers": {

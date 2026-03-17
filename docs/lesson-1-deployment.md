@@ -17,7 +17,7 @@ Open `infra/main.bicep`. It is a **subscription-scoped** template that:
 1. Creates a resource group `rg-<nameToken>-<environment>`.
 2. Calls the `resources.bicep` module which deploys the Logic App.
 
-Open `infra/resources.bicep`. It deploys a single **Consumption Logic App** with an HTTP trigger that echoes back whatever you POST.
+Open `infra/resources.bicep`. It deploys a single **Consumption Logic App** with an HTTP trigger that echoes back whatever you POST. The workflow definition is loaded from a separate `infra/workflow-definition.json` file via `loadJsonContent()`, keeping the Bicep file clean.
 
 Open `infra/main.dev.bicepparam`. It pins the parameters for the dev stage:
 ```
