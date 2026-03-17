@@ -29,7 +29,7 @@ A hands-on workshop that takes you from a bare **Azure Logic App (Consumption)**
 - An Azure subscription with **Contributor** access.
 - An **Entra ID app registration** (or user-assigned managed identity) with:
   - A **federated credential** trusting your GitHub repo (environment: `dev`).
-  - **Contributor** role on the subscription.
+  - **Owner** role on the subscription (needed for role assignments in Lesson 3).
 
 ### GitHub
 - A GitHub repository (fork or copy of this starter).
