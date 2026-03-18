@@ -15,7 +15,7 @@ param location string
 
 var logicAppName = 'la-${nameToken}-${environment}'
 var appServicePlanName = 'asp-${nameToken}-${environment}'
-var logicAppStorageName = 'stla${replace(nameToken, '-', '')}${environment}'
+var storageAccountName = 'stor${replace(nameToken, '-', '')}${environment}'
 
 // ── App Service Plan (Workflow Standard) ──
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
@@ -29,9 +29,9 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   properties: {}
 }
 
-// ── Storage account for Logic App Standard runtime ──
-resource logicAppStorage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: logicAppStorageName
+// ── Storage account (Logic App runtime + data) ──
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: storageAccountName
   location: location
   kind: 'StorageV2'
   sku: {
@@ -59,7 +59,7 @@ resource logicApp 'Microsoft.Web/sites@2023-12-01' = {
         { name: 'APP_KIND', value: 'workflowApp' }
         { name: 'AzureFunctionsJobHost__extensionBundle__id', value: 'Microsoft.Azure.Functions.ExtensionBundle.Workflows' }
         { name: 'AzureFunctionsJobHost__extensionBundle__version', value: '[1.*, 2.0.0)' }
-        { name: 'AzureWebJobsStorage', value: 'DefaultEndpointsProtocol=https;AccountName=${logicAppStorage.name};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${logicAppStorage.listKeys().keys[0].value}' }
+        { name: 'AzureWebJobsStorage', value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${az.environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}' }
         { name: 'FUNCTIONS_EXTENSION_VERSION', value: '~4' }
         { name: 'FUNCTIONS_WORKER_RUNTIME', value: 'node' }
         { name: 'WEBSITE_NODE_DEFAULT_VERSION', value: '~18' }
