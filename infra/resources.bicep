@@ -84,4 +84,5 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 // Outputs
+output logicAppName string = workflow.name
 output storageAccountName string = storageAccount.name
