@@ -61,7 +61,6 @@ jobs:
           parameters: infra/main.dev.bicepparam
 
   deploy-prod:
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: prod
     steps:
