@@ -1,34 +1,184 @@
 {
   "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {},
+  "parameters": {
+    "storageBaseUrl": {
+      "type": "string"
+    }
+  },
   "triggers": {
     "When_a_HTTP_request_is_received": {
       "type": "Request",
       "kind": "Http",
       "inputs": {
-        "method": "POST",
         "schema": {
           "type": "object",
           "properties": {
+            "action":      { "type": "string" },
+            "id":          { "type": "string" },
             "subject":     { "type": "string" },
             "description": { "type": "string" }
           },
-          "required": ["subject"]
+          "required": ["action"]
         }
       }
     }
   },
   "actions": {
-    "Echo_response": {
-      "type": "Response",
-      "inputs": {
-        "statusCode": 200,
-        "headers": { "Content-Type": "application/json" },
-        "body": {
-          "message": "Todo received",
-          "subject": "@{triggerBody()?['subject']}",
-          "description": "@{triggerBody()?['description']}"
+    "Switch_on_action": {
+      "type": "Switch",
+      "expression": "@triggerBody()?['action']",
+      "cases": {
+        "list": {
+          "case": "list",
+          "actions": {
+            "Query_todos": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "@{parameters('storageBaseUrl')}todos()",
+                "headers": {
+                  "x-ms-version": "2020-12-06",
+                  "Accept": "application/json;odata=nometadata"
+                },
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://storage.azure.com/"
+                }
+              }
+            },
+            "Response_list": {
+              "type": "Response",
+              "runAfter": { "Query_todos": ["Succeeded"] },
+              "inputs": {
+                "statusCode": 200,
+                "headers": { "Content-Type": "application/json" },
+                "body": "@body('Query_todos')?['value']"
+              }
+            }
+          }
+        },
+        "create": {
+          "case": "create",
+          "actions": {
+            "Insert_todo": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@{parameters('storageBaseUrl')}todos",
+                "headers": {
+                  "x-ms-version": "2020-12-06",
+                  "Accept": "application/json;odata=nometadata",
+                  "Content-Type": "application/json",
+                  "Prefer": "return-content"
+                },
+                "body": {
+                  "PartitionKey": "todo",
+                  "RowKey": "@{guid()}",
+                  "subject": "@{triggerBody()?['subject']}",
+                  "description": "@{triggerBody()?['description']}"
+                },
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://storage.azure.com/"
+                }
+              }
+            },
+            "Response_create": {
+              "type": "Response",
+              "runAfter": { "Insert_todo": ["Succeeded"] },
+              "inputs": {
+                "statusCode": 201,
+                "headers": { "Content-Type": "application/json" },
+                "body": "@body('Insert_todo')"
+              }
+            }
+          }
+        },
+        "update": {
+          "case": "update",
+          "actions": {
+            "Update_todo": {
+              "type": "Http",
+              "inputs": {
+                "method": "PUT",
+                "uri": "@{parameters('storageBaseUrl')}todos(PartitionKey='todo',RowKey='@{triggerBody()?['id']}')",
+                "headers": {
+                  "x-ms-version": "2020-12-06",
+                  "Accept": "application/json;odata=nometadata",
+                  "Content-Type": "application/json",
+                  "If-Match": "*"
+                },
+                "body": {
+                  "PartitionKey": "todo",
+                  "RowKey": "@{triggerBody()?['id']}",
+                  "subject": "@{triggerBody()?['subject']}",
+                  "description": "@{triggerBody()?['description']}"
+                },
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://storage.azure.com/"
+                }
+              }
+            },
+            "Response_update": {
+              "type": "Response",
+              "runAfter": { "Update_todo": ["Succeeded"] },
+              "inputs": {
+                "statusCode": 200,
+                "headers": { "Content-Type": "application/json" },
+                "body": {
+                  "message": "Todo updated",
+                  "id": "@{triggerBody()?['id']}"
+                }
+              }
+            }
+          }
+        },
+        "delete": {
+          "case": "delete",
+          "actions": {
+            "Delete_todo": {
+              "type": "Http",
+              "inputs": {
+                "method": "DELETE",
+                "uri": "@{parameters('storageBaseUrl')}todos(PartitionKey='todo',RowKey='@{triggerBody()?['id']}')",
+                "headers": {
+                  "x-ms-version": "2020-12-06",
+                  "Accept": "application/json;odata=nometadata",
+                  "If-Match": "*"
+                },
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://storage.azure.com/"
+                }
+              }
+            },
+            "Response_delete": {
+              "type": "Response",
+              "runAfter": { "Delete_todo": ["Succeeded"] },
+              "inputs": {
+                "statusCode": 200,
+                "headers": { "Content-Type": "application/json" },
+                "body": {
+                  "message": "Todo deleted",
+                  "id": "@{triggerBody()?['id']}"
+                }
+              }
+            }
+          }
+        }
+      },
+      "default": {
+        "actions": {
+          "Response_invalid_action": {
+            "type": "Response",
+            "inputs": {
+              "statusCode": 400,
+              "headers": { "Content-Type": "application/json" },
+              "body": { "error": "Invalid action. Use: list, create, update, delete" }
+            }
+          }
         }
       }
     }
