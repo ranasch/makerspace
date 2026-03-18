@@ -20,6 +20,35 @@ var tableName = 'todos'
 // Built-in role: Storage Table Data Contributor
 var storageTableDataContributorRoleId = '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'
 
+var storageAccountName = 'stor${replace(nameToken, '-', '')}${environment}'
+var tableName = 'todos'
+
+// Built-in role: Storage Table Data Contributor
+var storageTableDataContributorRoleId = '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'
+
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: storageAccountName
+  location: location
+  kind: 'StorageV2'
+  sku: {
+    name: 'Standard_LRS'
+  }
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    allowBlobPublicAccess: false
+  }
+}
+
+resource tableService 'Microsoft.Storage/storageAccounts/tableServices@2023-05-01' = {
+  name: 'default'
+  parent: storageAccount
+}
+
+resource table 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-05-01' = {
+  name: tableName
+  parent: tableService
+}
 // ── Workflow definition (echo POST body) ──
 // Workflow definition loaded from separate file — edit workflow-definition.json to change Logic App behaviour.
 var workflowDefinition = loadJsonContent('workflow-definition.json')

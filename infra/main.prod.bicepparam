@@ -1,5 +1,5 @@
 using './main.bicep'
 
-param nameToken = 'rn-prod01'
+param nameToken = 'cb01-prod'
 param environment = 'prod'
 param location = 'westeurope'
