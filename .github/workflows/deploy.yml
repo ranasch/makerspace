@@ -1,4 +1,4 @@
-name: Deploy Logic App (Consumption) via Bicep
+name: Deploy Logic App (Standard) via Bicep
 
 on:
   push:
@@ -24,9 +24,22 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy DEV
+        id: deploy-infra
         uses: azure/arm-deploy@v2
         with:
           scope: subscription
           region: westeurope
           template: infra/main.bicep
           parameters: infra/main.dev.bicepparam
+
+      - name: Package workflows
+        run: cd workflows && zip -r ../workflows.zip . && cd ..
+
+      - name: Deploy workflows
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az logicapp deployment source config-zip \
+              --name ${{ steps.deploy-infra.outputs.logicAppName }} \
+              --resource-group ${{ steps.deploy-infra.outputs.resourceGroupName }} \
+              --src workflows.zip
